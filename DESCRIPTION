@@ -1,0 +1,11 @@
+Package: refik
+Type: Package
+Title: Personal Dashboard of Refik
+Version: 0.1.0
+Author: Refik Türkeli
+Maintainer: Refik Türkeli <refik.rfk@gmail.com>
+Description: This package is where I process, manage, visualize and track my 
+    personal data.
+License: MIT
+Encoding: UTF-8
+LazyData: true
