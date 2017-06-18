@@ -11,9 +11,21 @@ NULL
 airtable <- memoise::memoise(function(base_name = NULL, table_name = NULL,
                                       base_id = NULL, tr_base = FALSE,
                                       as_tibble = TRUE) {
+  assert_that(!is.null(base_name) || !is.null(base_id),
+              msg = "One of base_name or base_id must be provided")
+
   # Bootstrapping for getting config base. Other base_id's will be retrieved
   # from the config Airtable
   if (base_name == "config") base_id <- "app8tM2wDLB6vXtS0"
+
+  if (is.null(base_id)) {
+    # If base_name is given, base_id must be found from the base dataset
+    base_id <- airtable(base_name = "config", table_name = "base") %>%
+      dplyr::filter(.data$base_name == !!base_name) %>%
+      dplyr::pull(.data$base_id)
+
+    assert_that(assertthat::is.string(base_id))
+  }
 
   # AirtableR doesn't url encode so tables with Turkish characters cause problem
   table_name <- utils::URLencode(table_name)
@@ -48,3 +60,18 @@ airtable <- memoise::memoise(function(base_name = NULL, table_name = NULL,
 
   result
 })
+
+#' Normalizing airtable linked columns
+#'
+#' @export
+airtable_link_normalize <- function(dataset, column) {
+  # Linked columns are list by default, converting to character
+  dplyr::mutate(dataset, !!column := as.character(
+    purrr::map(.data[[column]], ~ {
+      # Linked columns have NULL values by default, converting to character NA
+      # because it will be cast to character vector later
+      if (is.null(.x)) NA_character_
+      else .x
+    })
+  ))
+}

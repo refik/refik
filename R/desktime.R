@@ -28,7 +28,16 @@ desktime_api_day <- function(date = Sys.Date()) {
                   }) %>%
                     dplyr::bind_rows()
                 },
-                .id = "productivity")
+                .id = "productivity") %>%
+    dplyr::mutate(date = !!date)
+}
+
+#' Desktime api data for a given period
+#'
+#' @export
+desktime_api_period <- function(period_start, period_end = Sys.Date()) {
+  day_range(period_start, period_end) %>%
+    purrr::map_df(~ desktime_api_day(date = .x))
 }
 
 
