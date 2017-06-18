@@ -5,3 +5,4 @@
 packrat/lib*/
 .swp
 .DS_Store
+.Renviron

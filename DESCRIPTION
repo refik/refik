@@ -9,3 +9,17 @@ Description: This package is where I process, manage, visualize and track my
 License: MIT
 Encoding: UTF-8
 LazyData: true
+Remotes:
+  jsng/AirtableR
+Imports:
+  dplyr,
+  tibble,
+  purrr,
+  rlang,
+  jsonlite,
+  urltools,
+  AirtableR,
+  assertthat,
+  glue,
+  memoise
+RoxygenNote: 6.0.1
