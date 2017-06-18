@@ -33,8 +33,10 @@ airtable <- memoise::memoise(function(base_name = NULL, table_name = NULL,
     } else {
       # Converting the list to tibble
       result <- purrr::map(records_list, ~ c(
-        purrr::map(.x$fields, ~ if (is.list(.x)) list(as.character(.x))
-                   else .x),
+        purrr::map(.x$fields, ~ {
+          if (is.list(.x)) list(as.character(.x))
+          else .x
+        }),
         "id" = .x$id,
         "created_time" = .x$createdTime
       )) %>%
