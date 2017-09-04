@@ -1,6 +1,6 @@
 #' @importFrom dplyr %>%
 #' @importFrom dplyr if_else
-#' @importFrom rlang .data
+#' @importFrom rlang .data quo
 #' @importFrom assertthat assert_that
 #' @importFrom glue glue
 NULL
@@ -9,8 +9,11 @@ NULL
 #'
 #' @export
 airtable <- memoise::memoise(function(base_name = NULL, table_name = NULL,
-                                      base_id = NULL, tr_base = FALSE,
-                                      as_tibble = TRUE) {
+                                      base_id = NULL,
+                                      single_link = character(0),
+                                      datetime = character(0),
+                                      boolean = character(0),
+                                      date = character(0)) {
   assert_that(!is.null(base_name) || !is.null(base_id),
               msg = "One of base_name or base_id must be provided")
 
@@ -37,41 +40,30 @@ airtable <- memoise::memoise(function(base_name = NULL, table_name = NULL,
   # pagination and recursive makes sure all records are retreived
   records_list <- table_api$list_records(recursive = TRUE)
 
-  if (as_tibble == TRUE) {
-    # Converting list output to tibble
-    if (length(records_list) == 0) {
-      # If the list is empty, don't bother with conversion
-      result <- tibble::tibble()
-    } else {
-      # Converting the list to tibble
-      result <- purrr::map(records_list, ~ c(
-        purrr::map(.x$fields, ~ {
-          if (is.list(.x)) list(as.character(.x))
-          else .x
-        }),
-        "id" = .x$id,
-        "created_time" = .x$createdTime
-      )) %>%
-        dplyr::bind_rows()
-    }
-  } else {
-    result <- records_list
+  # Converting list output to tibble
+  if (length(records_list) == 0) {
+    # If the list is empty, don't bother with conversion
+    return(tibble::tibble())
   }
 
-  result
-})
+  # All data has created_time by default. Making sure it gets converted to
+  # proper datetime object
+  if (!("created_time" %in% datetime)) datetime <- c("created_time", datetime)
+  browser()
+  # Converting the list to tibble
+  purrr::map(records_list, ~ c(
+    purrr::map(.x$fields, ~ ifelse(is.list(.x), list(as.character(.x)), .x)),
+    "airtable_id" = .x$id,
+    "airtable_created_time" = .x$createdTime
+  )) %>%
+    dplyr::bind_rows() %>%
 
-#' Normalizing airtable linked columns
-#'
-#' @export
-airtable_link_normalize <- function(dataset, column) {
-  # Linked columns are list by default, converting to character
-  dplyr::mutate(dataset, !!column := as.character(
-    purrr::map(.data[[column]], ~ {
-      # Linked columns have NULL values by default, converting to character NA
-      # because it will be cast to character vector later
-      if (is.null(.x)) NA_character_
-      else .x
+    # Converting common data types to tidy objects
+    dplyr::mutate_at(datetime, ~ lubridate::ymd_hms(.x, tz = "Turkey")) %>%
+    dplyr::mutate_at(date , ~ as.Date(.x)) %>%
+    dplyr::mutate_at(boolean, ~ if_else(is.na(.x), FALSE, TRUE)) %>%
+    dplyr::mutate_at(single_link, function(link) {
+      purrr::map(link, ~ if_else(is.null(.x), NA_character_, .x)) %>%
+        as.character()
     })
-  ))
-}
+})

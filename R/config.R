@@ -2,7 +2,7 @@
 #'
 #' @export
 get_config <- function(namespace, key) {
-  value <- airtable(base_name = "config", table_name = "config") %>%
+  value <- airtable(base_name = "config", table_name = "r_config") %>%
     dplyr::filter(.data$namespace == !!namespace,
                   .data$key == !!key) %>%
     dplyr::pull(.data$value)

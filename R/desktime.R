@@ -18,17 +18,17 @@ desktime_api_day <- function(date = Sys.Date()) {
   names(api_response$apps) <- app_type[names(api_response$apps)]
 
   # Converting the json returned by API to tibble
-  purrr::map_df(api_response$apps,
-                function(app_records) {
-                  purrr::map(app_records, ~ {
-                    # Some category_id are character, some are integer. This
-                    # causes an error on bind_rows. Preventing that.
-                    .x$category_id <- as.integer(.x$category_id)
-                    .x
-                  }) %>%
-                    dplyr::bind_rows()
-                },
-                .id = "productivity") %>%
+  api_response$apps %>%
+    purrr::map_df(function(app_records) {
+      purrr::map(app_records, ~ {
+        # Some category_id are character, some are integer. This
+        # causes an error on bind_rows. Preventing that.
+        .x$category_id <- as.integer(.x$category_id)
+        .x
+      }) %>%
+        dplyr::bind_rows()
+    },
+    .id = "productivity") %>%
     dplyr::mutate(date = !!date)
 }
 

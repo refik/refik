@@ -5,7 +5,8 @@
 \title{Get data from Airtable}
 \usage{
 airtable(base_name = NULL, table_name = NULL, base_id = NULL,
-  tr_base = FALSE, as_tibble = TRUE)
+  single_link = character(0), datetime = character(0),
+  boolean = character(0), date = character(0))
 }
 \description{
 Get data from Airtable
